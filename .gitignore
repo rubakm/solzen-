@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+**/dist/
+
+# Secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+# Public, non-secret build setting for the live site
+!frontend/.env.production
+**/.env.txt
+
+# Admin-edited site content (lives on the server)
+backend/data/
+
+# Local helpers
+.vercel
+build-log.txt
+backend-log.txt
+publish-log.txt
+_to_delete/
