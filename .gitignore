@@ -24,3 +24,6 @@ build-log.txt
 backend-log.txt
 publish-log.txt
 _to_delete/
+push-log.txt
+build-log.txt
+backend-log.txt
