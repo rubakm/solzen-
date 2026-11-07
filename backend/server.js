@@ -87,11 +87,21 @@ function escapeHtml(value = '') {
   })[char]);
 }
 
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  let database = 'not used';
+  if (STORAGE === 'mongodb') {
+    try {
+      await initStorage();
+      database = 'connected';
+    } catch (err) {
+      database = `error: ${err.message}`;
+    }
+  }
   res.status(200).json({
     status: 'ok',
     service: 'solzen-backend',
     storage: STORAGE,
+    database,
     timestamp: new Date().toISOString(),
   });
 });
@@ -259,9 +269,15 @@ app.get('/uploads/:name', (req, res) => sendUpload(req.params.name, res));
 
 // Public: content the website renders (sections not saved yet are omitted, so the site uses its defaults)
 app.get('/api/content', async (req, res) => {
-  const content = await readContent();
   res.set('Cache-Control', 'no-store');
-  res.json({ success: true, content });
+  try {
+    const content = await readContent();
+    return res.json({ success: true, content });
+  } catch (err) {
+    // The website falls back to its built-in content when this fails.
+    console.error('[SOLZEN Backend] Could not read content:', err.message);
+    return res.status(503).json({ success: false, error: 'Content is temporarily unavailable.' });
+  }
 });
 
 app.post('/api/admin/login', loginLimiter, (req, res) => {
@@ -310,6 +326,11 @@ app.put('/api/admin/content/:section', requireAdmin, async (req, res) => {
   } catch (err) {
     return res.status(400).json({ success: false, error: err.message });
   }
+});
+
+// Never let a stray async error take the whole server down; log it instead.
+process.on('unhandledRejection', err => {
+  console.error('[SOLZEN Backend] Unhandled error:', err && err.message ? err.message : err);
 });
 
 initStorage()
